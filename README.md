@@ -2,8 +2,8 @@
 
 Primjer jednostavne CPU ray tracing implementacije.
 
-- [seminar](./doc/main.pdf)
-- [prezentacija](./doc/prezentacija.pdf)
+- [seminar](https://raw.githubusercontent.com/Caellian/UNIRI_MT_SEM/trunk/doc/main.pdf)
+- [prezentacija](https://raw.githubusercontent.com/Caellian/UNIRI_MT_SEM/trunk/doc/prezentacija.pdf)
 
 ![pregled rezultata](output_1.png)
 
