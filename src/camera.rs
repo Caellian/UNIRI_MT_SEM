@@ -1,15 +1,12 @@
-use crate::{
-    math::{Vec2, Vec3},
-    ray::Ray,
-};
-use nalgebra::{Quaternion, Vector2};
+use crate::ray::Ray;
+use glam::{Quat, U64Vec2, U8Vec2, UVec2, Vec2, Vec3};
 
 pub struct Camera {
     pub position: Vec3,
-    pub rotation: Quaternion<f32>,
+    pub rotation: Quat,
 
-    pub dimensions: Vector2<usize>,
-    pub samples_per_pixel: Vector2<usize>,
+    pub dimensions: U64Vec2,
+    pub samples_per_pixel: U8Vec2,
 
     pub fov: f32,
 }
@@ -17,10 +14,10 @@ pub struct Camera {
 impl Default for Camera {
     fn default() -> Self {
         Self {
-            position: Vec3::zeros(),
+            position: Vec3::ZERO,
             rotation: Default::default(),
-            dimensions: Vector2::new(800, 600),
-            samples_per_pixel: Vector2::new(1, 1),
+            dimensions: U64Vec2::new(800, 600),
+            samples_per_pixel: U8Vec2::new(1, 1),
             fov: 90f32.to_radians(),
         }
     }
@@ -32,10 +29,12 @@ impl Camera {
     }
 
     pub fn iter_rays(&self) -> RayIterator<'_> {
-        let step = Vec2::new(1.0, 1.0);
+        let spp = self.samples_per_pixel.as_vec2();
+        let sample_step = Vec2::new(1.0, 1.0) / spp;
+        let step = Vec2::new(1.0, 1.0) / spp;
         RayIterator {
             camera: self,
-            i: step / 2.0,
+            i: Vec2::new(0.5, 0.5) - (spp / 2.0),
             step,
         }
     }
@@ -47,7 +46,7 @@ pub struct RayIterator<'c> {
     step: Vec2,
 }
 
-impl<'c> Iterator for RayIterator<'c> {
+impl Iterator for RayIterator<'_> {
     type Item = Ray;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -61,10 +60,12 @@ impl<'c> Iterator for RayIterator<'c> {
                 return None;
             }
         }
-        let ndc: Vec2 = self.i.component_div(&self.camera.dimensions.cast());
-        let screen_x = (2.0 * ndc.x - 1.0)
-            * (self.camera.fov / 2.0).tan()
-            * self.camera.aspect_ratio();
+        let ndc: Vec2 = Vec2::new(
+            self.i.x / self.camera.dimensions.x as f32,
+            self.i.y / self.camera.dimensions.y as f32,
+        );
+        let screen_x =
+            (2.0 * ndc.x - 1.0) * (self.camera.fov / 2.0).tan() * self.camera.aspect_ratio();
         let screen_y = (1.0 - 2.0 * ndc.y) * (self.camera.fov / 2.0).tan();
 
         self.i.x += self.step.x;
@@ -74,7 +75,10 @@ impl<'c> Iterator for RayIterator<'c> {
         Some(Ray {
             origin: self.camera.position,
             direction,
-            target: Some(Vector2::new(self.i.x.floor() as u32, self.i.y.floor() as u32))
+            source: Some(U64Vec2::new(
+                self.i.x.floor() as u64,
+                self.i.y.floor() as u64,
+            )),
         })
     }
 }

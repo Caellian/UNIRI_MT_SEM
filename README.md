@@ -2,7 +2,10 @@
 
 Primjer jednostavne CPU ray tracing implementacije.
 
-![pregled rezultata](output.png)
+- [seminar](./doc/main.pdf)
+- [prezentacija](./doc/prezentacija.pdf)
+
+![pregled rezultata](output_1.png)
 
 ## Benchmark
 
