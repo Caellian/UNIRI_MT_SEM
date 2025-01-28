@@ -19,7 +19,7 @@
 
 = Uvod
 
-Metoda pračenja zraka svjetlosti (engl. _ray tracing_, RT) se zasniva na relaksaciji problema simulacije ponašanja svjetlosti u zatvorenom optičkom sustavu. Ray tracing metode nastoje provesti idealnu simulaciju ponašanja svijetla kako bi postigle rezultate bliske stvarnima.
+Metoda praćenja zraka svjetlosti (engl. _ray tracing_, RT) se zasniva na relaksaciji problema simulacije ponašanja svjetlosti u zatvorenom optičkom sustavu. Ray tracing metode nastoje provesti idealnu simulaciju ponašanja svijetla kako bi postigle rezultate bliske stvarnima.
 
 == Motivacija
 
@@ -27,14 +27,14 @@ Autor je odabrao ovu temu za seminar jer unatoč nekom osnovnom znanju u princip
 
 == Povijest razvoja
 
-Prvi temelj ovog algoritma je objavio P. W. Ford 1960. godine u radu "Nova shema pračenja zraka svjetlosti" (engl. _"New Ray Tracing Scheme"_), a bazirao ga je na jednadžbama koje je H. A. Buchdahl laboratorijski testirao i opisao u monografu "Koeficijenti optičke aberacije" (engl. _"Optical Aberration Coefficients"_).
+Prvi temelj ovog algoritma je objavio P. W. Ford 1960. godine u radu "Nova shema praćenja zraka svjetlosti" (engl. _"New Ray Tracing Scheme"_), a bazirao ga je na jednadžbama koje je H. A. Buchdahl laboratorijski testirao i opisao u monografiji "Koeficijenti optičke aberacije" (engl. _"Optical Aberration Coefficients"_).
 
 Fordov algoritam je bio osmišljen za aksijalno simetrične optičke sustave te je baratao s "idealnim zrakama svjetlosti" koje ne prate stvarne zakone refrakcije svijetla nego paraksijalnu optiku koja dopušta linearne aproksimacije refrakcije. Uporaba parakoničnih koordinata je pojednostavilo matematičku analizu, te pružilo iznimno brzu metodu izračuna za sustave koji sadrže isključivo sfere. @ford1960new
 
-Kroz narednih 20 godina je bilo nekoliko manjih pomaka, no zbog hardverskih ograničenja je ova tehnika vidjela značajan napredak tek stredinom 80ih godina (20. st.), kada je na Siggraphu i drugim manjim konferencijama, kao i u akademiji bilo objavljeno preko 150 različitih radova, članaka i prezentacija na temu. #linebreak()
+Kroz narednih 20 godina je bilo nekoliko manjih pomaka, no zbog hardverskih ograničenja je ova tehnika vidjela značajan napredak tek sredinom 80ih godina (20. st.), kada je na Siggraphu i drugim manjim konferencijama, kao i u akademiji bilo objavljeno preko 150 različitih radova, članaka i prezentacija na temu. #linebreak()
 Mnoge od tih tehnika su i danas primjenjive, no zbog tadašnjih hardverskih ograničenja su bile primarno korištene za prijevremen (engl. _offline_) prikaz.
 
-Nvidia je 2020. godine objavila Ampere seriju grafičkih kartica (engl. _graphics processing unit_, GPU) za radne stanice (profesionalna primjena) @rtx-launch koje imaju specijalizirane hardverske komponente za određene izračune koji su opisani u @hw-support, te nedugo zatim i komercijalnu seriju RTX grafičkih kartica. Te kartice su omogučile provođenje jednostavnijih ray tracing algoritama u realnom vremenu (engl. _online_).
+Nvidia je 2020. godine objavila Ampere seriju grafičkih kartica (engl. _graphics processing unit_, GPU) za radne stanice (profesionalna primjena) @rtx-launch koje imaju specijalizirane hardverske komponente za određene izračune koji su opisani u @hw-support, te nedugo zatim i komercijalnu seriju RTX grafičkih kartica. Te kartice su omogućile provođenje jednostavnijih ray tracing algoritama u realnom vremenu (engl. _online_).
 
 #pagebreak()
 = Hardverska podrška <hw-support>
@@ -50,29 +50,29 @@ Prethodno specijaliziranom hardveru, ray tracing metode su funkcionirale tako š
 
 Arhitektura modernih RT jezgri nije značajno različita u funkcionalnosti koju pruža, pa je @saarcor dovoljna aproksimacija za ovaj seminarski rad. Ostatak seminarskog rada pretpostavlja uporabu RT jezgri grafičke kartice, ili u kontekstu objašnjenja praktičnog dijela prijevremen prikaz putem procesora (engl. _central processing unit_, CPU).
 
-Uz specijaliziran hardver su u Vulkan, D3D12 i Metal dodana proširenja koja omogučuju njegovu uporabu.
+Uz specijaliziran hardver su u Vulkan, D3D12 i Metal dodana proširenja koja omogućuju njegovu uporabu.
 
 Ta proširenja generalno dodaju:
 - strukture i funkcije za prijenos podataka o geometriji (trokutima ili AABB okvirima) i zrakama,
-- programabilno sučelje za provođenje testiranja presjeka zraka sa geometrijom u sklopu programa provedenom na grafičkoj kartici (engl. _shader_),
+- programabilno sučelje za provođenje testiranja presjeka zraka s geometrijom u sklopu programa provedenom na grafičkoj kartici (engl. _shader_),
   - fazu obrade zaprimljenih podataka na grafičkim karticama.
 
 #pagebreak()
 = Temeljni način rada
 
-Temeljno razlikujemo algoritme koji koračaju zrakama svjetlosti unaprijed ili unazad. Pravilan odabir algoritma ovisi o području primjene. Za svrhu prikaza računalne grafike namjenjene zabavi su algoritmi koračanja zrakama unazad bolji izbor jer točnost nije bitna.
+Temeljno razlikujemo algoritme koji koračaju zrakama svjetlosti unaprijed ili unazad. Pravilan odabir algoritma ovisi o području primjene. Za svrhu prikaza računalne grafike namijenjene zabavi su algoritmi koračanja zrakama unazad bolji izbor jer točnost nije bitna.
 
 == Koračanje unaprijed
 
-Koračanje zrakama unaprijed je vjerodostojno stvarnom ponašanju svjetlosti u prirodi, no jako je potrošan za svrhu grafičkog prikaza jer većinu odaslanih zraka svjetlosti absorbiraju predmeti u sceni ili se dovoljno udalje da više nemaju značajan utjecaj na rezultat prikaza, te nisu vidljivi kao što je primjetno na @fw-image[slici].
+Koračanje zrakama unaprijed je vjerodostojno stvarnom ponašanju svjetlosti u prirodi, no jako je potrošan za svrhu grafičkog prikaza jer većinu odaslanih zraka svjetlosti apsorbiraju predmeti u sceni ili se dovoljno udalje da više nemaju značajan utjecaj na rezultat prikaza, te nisu vidljivi kao što je primjetno na @fw-image[slici].
 
 #figure(caption: "Zrake svjetlosti odaslane iz izvora", image("art/forward.svg")) <fw-image>
 
-Absorbirana svjetlost ima fizičke manifestacije na tijela poput uzbuđenja elektrona i zagrijavanja tvari, pa je za određene namjene (npr. fizičke simulacije @Qin:12) ovaj pristup jedino smislen.
+Apsorbirana svjetlost ima fizičke manifestacije na tijela poput uzbuđenja elektrona i zagrijavanja tvari, pa je za određene namjene (npr. fizičke simulacije @Qin:12) ovaj pristup jedino smislen.
 
-== Koračanje unazad <backwards>
+== Koračanje unazad 
 
-Koračanje zrakama unazad se razlikuje od prethodno opisanog pristupa po tome što ne simulira zrake svjetlosti nego unazadno uzorkuje osvjetljene s scene odašiljajući zrake uzorkovanja (nadalje zrake) iz kamere kao što je prikazano na @bw-image[slici].
+Koračanje zrakama unazad se razlikuje od prethodno opisanog pristupa po tome što ne simulira zrake svjetlosti nego unazadno uzorkuje osvjetljenje sa scene odašiljajući zrake uzorkovanja (nadalje zrake) iz kamere kao što je prikazano na @bw-image[slici].
 
 #figure(caption: "Zrake uzorkovanja odaslane iz kamere", image("art/backward.svg")) <bw-image>
 
@@ -82,8 +82,8 @@ Koračanje zrakama unazad se razlikuje od prethodno opisanog pristupa po tome š
   - pozicija svake zrake je jednaka poziciji kamere, a smjer zrake ovisi o vrsti projekcije, leći kamere, te poziciji piksela kojem je zraka pridružena,
 2. prolaskom kroz predmete u sceni, pronaći najbliži kameri kojeg zraka dodiruje,
 3. provesti prikladnu interakciju zavisno o materijalu,
-  - ukoliko se radi o reflektivnom materijalu ponoviti uzorkovanje od 1. koraka za uzorkovanu točku kako bi se odredila reflektirana svjetlost ($L_i$),
-    - ukoliko se radi o nesavršenom zrcalu, potrebno je uzorkovati nekoliko zraka, pa zatim
+  - ako se radi o reflektivnom materijalu ponoviti uzorkovanje od 1. koraka za uzorkovanu točku kako bi se odredila reflektirana svjetlost ($L_i$),
+    - ako se radi o nesavršenom zrcalu, potrebno je uzorkovati nekoliko zraka, pa zatim
 4. pohraniti uzorkovanu vrijednost (ili težinski prosjek više njih) u međuspremniku (engl. _buffer_) za prikaz.
 
 #figure(caption: "Pronalaženje presjeka zraka s tijelima", image("figure/rayfiltering.png")) <ray-image>
@@ -95,9 +95,9 @@ Koračanje zrakama unazad se razlikuje od prethodno opisanog pristupa po tome š
 
 Određivanje presjeka zrake s geometrijom ovisi o načinu na koji je geometrija scene definirana. Geometrija scene može biti definirana pravilima ili diskretnim podacima.
 
-I kontekstu računalne grafike su diskretni podaci češći i njihova je primjena proširenija jer privilima zadan oblik često zahtjeva veću razinu truda za postizanje rezultata koji su neprimjetno bolji od diskretnih za mnoge vrste primjena.
+I kontekstu računalne grafike su diskretni podaci češći i njihova je primjena proširenija jer pravilima zadan oblik često zahtijeva veću razinu truda za postizanje rezultata koji su neprimjetno bolji od diskretnih za mnoge vrste primjena.
 
-Pravilima zadana geometrija zauzima manje prostora za pohranu kod jednostavnih geometrijskih tijela poput sfera, cilindara, diskova, stožaca i dr. pa je njena primjena bolja za takve slučajeve. Slaganjem različitih jednostavnijih tijela se mogu postići puno složeniji oblici korištenjem booleovih operatora (engl. _boolean operators_), no neke iznimno nepravilne površine je i dalje teško ispravno prikazati na ovaj način pa je diskretna geometrija često jednostavniji odabir. Iako se svako tijelo može izraziti pravilima, diskretan način pohrane može biti znatno jednostavniji za izračun od rješavanja iznimno složenih jednadžbi za svaki presjek zrake sa geometrijom (ali i provjeru sudara).
+Pravilima zadana geometrija zauzima manje prostora za pohranu kod jednostavnih geometrijskih tijela poput sfera, cilindara, diskova, stožaca i dr. pa je njena primjena bolja za takve slučajeve. Slaganjem različitih jednostavnijih tijela se mogu postići puno složeniji oblici korištenjem Booleovih operatora (engl. _boolean operators_), no neke iznimno nepravilne površine je i dalje teško ispravno prikazati na ovaj način pa je diskretna geometrija često jednostavniji odabir. Iako se svako tijelo može izraziti pravilima, diskretan način pohrane može biti znatno jednostavniji za izračun od rješavanja iznimno složenih jednadžbi za svaki presjek zrake s geometrijom (ali i provjeru sudara).
 
 Praktični dio ovog seminarskog rada koristi pravilima zadanu sferu koja je prikazana u priloženom @ray-sphere-intersection[kȏdu], jer je provjera kolizije, te udaljenosti kolizije zrake sa sferom jednostavna.
 
@@ -137,11 +137,11 @@ Praktični dio ovog seminarskog rada koristi pravilima zadanu sferu koja je prik
   ```
 ] <ray-sphere-intersection>
 
-Kod provjere presjeka je za složenije scene s mnogo geometrije ili složenom geometrijom praktično koristiti akceleracijske strukture za obilazak sadržajem scene (engl. _scene traversal acceleration structures_). Česte su primjene hijerarhije omeđujučih volumena (engl. _bounding volume heirarchy_, BVH) i Kd-stabla (engl. _Kd-tree_) jer dopuštaju potpuno izbjegavanje zahtjevnih izračuna za kolizije. @Pharr2016-ex[dio 4.]
+Kod provjere presjeka je za složenije scene s mnogo geometrije ili složenom geometrijom praktično koristiti akceleracijske strukture za obilazak sadržajem scene (engl. _scene traversal acceleration structures_). Česte su primjene hijerarhije omeđujućih volumena (engl. _bounding volume heirarchy_, BVH) i Kd-stabla (engl. _Kd-tree_) jer dopuštaju potpuno izbjegavanje zahtjevnih izračuna za kolizije. @Pharr2016-ex[dio 4.]
 
 Provjerom kolizija se može grubo iscrtati sadržaj scene kao što je prikazano za sferu u @step-1[slici].
 
-#figure(caption: "Prikaz zraka koje presjecaju sferu (bijelo) i koje ne (crno)", image("figure/step_1.png", height: 10em)) <step-1>
+#figure(caption: "Prikaz zraka koje presijecaju sferu (bijelo) i koje ne (crno)", image("figure/step_1.png", height: 10em)) <step-1>
 
 = Svijetlo, boje i kolorimetrija
 
@@ -149,7 +149,7 @@ U fizičkom smislu, svjetlost se može razmatrati istovremeno kao val elektromag
 
 Kada razmatramo skup fotona u jednom snopu svjetlosti, grupiramo sve valne duljine u njemu sadržanih fotona u *spektar valnih duljina* (engl. _wavelength sprectrum_), a brojnost fotona pojedinih valnih duljina predstavlja intenzitet radijacije (engl. _radiation intensity_) za tu valjnu duljinu koji je izražen kao $(mu"mol")/(m^2s)$, tj. broj $10^6$ fotona koja prođu kroz površinu od $1m^2$ u jednoj sekundi.
 
-Spektar valnih duljina utjeće na percipiranu boju svjetlosti ako se nalazi u rasponu od 400nm do 700nm.
+Spektar valnih duljina utječe na percipiranu boju svjetlosti ako se nalazi u rasponu od 400nm do 700nm.
 
 U kontekstu RT aplikacija, boje mogu biti pohranjene kao zrake svjetlosti kada je željena točnija simulacija, no za svrhe prikaza modela, u računalnim igricama i animaciji su češće pohranjenje *diskretno* u prostoru boja spremnom za prikaz poput sRGB.
 
@@ -194,7 +194,7 @@ Za jednostavnije RT algoritme je diskretan način predstavljanja boja praktični
 
 No postoje primjene gdje je neophodno koristiti realističnu reprezentaciju jer daje puno točnije rezultate. Ona je neizbježna za točnu simulaciju:
 - interakcije svijetla s prizmama koje drugačije usmjeravaju svjetlost ovisno o njenoj valnoj duljini (disperzija),
-- interakcije svijetla s materijalima koji drugačije absorbiraju i/ili fluoresciraju svjetlost različitih valnih duljina.
+- interakcije svijetla s materijalima koji drugačije apsorbiraju i/ili fluoresciraju svjetlost različitih valnih duljina.
 
 Pretvorba iz XYZ prostora boja u sRGB prostor se provodi jednostavnom linearnom transformacijom koja je prikazana u @xyz-to-rgb[kodu]. Memoizacijom je moguće izbjeći potrebu za učestalim izračunom u svrhu pretvorbe boja.
 
@@ -218,9 +218,9 @@ impl From<CieXyz> for SrgbU8 {
 ```
 ] <xyz-to-rgb>
 
-Od inicijalne valne duljine je dobivena XYZ boja linearnom interpolacijom susjednih vrijenosti iz tablice preslikavanja prikazanoj u @color-mapping[slici].
+Od inicijalne valne duljine je dobivena XYZ boja linearnom interpolacijom susjednih vrijednosti iz tablice preslikavanja prikazanoj u @color-mapping[slici].
 
-Konačno, množenjem intenziteta zrake s XYZ bojama se dobivaju vrijednosti koje je potrebno normalizirati za prikaz. Dinamički raspon (engl. _dynamic range_) uzorkovanih boja boja će biti veći nego što simulirani senzor kamere može uhvatiti, i također veći nego što je moguče prikazati na zaslonu.
+Konačno, množenjem intenziteta zrake s XYZ bojama se dobivaju vrijednosti koje je potrebno normalizirati za prikaz. Dinamički raspon (engl. _dynamic range_) uzorkovanih boja boja će biti veći nego što simulirani senzor kamere može uhvatiti, i također veći nego što je moguće prikazati na zaslonu.
 
 = Kamera
 
@@ -244,25 +244,25 @@ Aparatura (engl. _aperture_) kontrolira i utječe na:
 - duljinu ekspozicije (engl. _exposure_),
 - vinjetu (engl. _vignette_),
 - boke (jap. ぼけ, _boke_),
-- uvečanje, i
+- uvećanje, i
 - druge karakteristike.
 
-Može se također koristiti i kamera s otvorom malog radiusa (engl. _pinhole camera_), koja daje zamučeniju sliku sa izraženom vinjetom.
+Može se također koristiti i kamera s otvorom malog radiusa (engl. _pinhole camera_), koja daje zamućeniju sliku s izraženom vinjetom.
 
-RT algoritmi mogu uzeti sve te karakteristike kamere u obzir kako bi izmjenili način na koji je scena prikazana, no pretežno se modelira samo nekolicina njih. Zbog jednostavnosti je u praktičnom dijelu ovog seminara korištena statična scena i idealna kamera u perspektivi s vidnim poljem horizontalnog raspona od $90 degree$. Korištena kamera također ne prati duljinu ekspozicije, nego se pretpostavlja da su svi fotoreceptori senzora osvjetljeni istovremeno konstantnom jačinom svjetlost.
+RT algoritmi mogu uzeti sve te karakteristike kamere u obzir kako bi izmijenili način na koji je scena prikazana, no pretežno se modelira samo nekolicina njih. Zbog jednostavnosti je u praktičnom dijelu ovog seminara korištena statična scena i idealna kamera u perspektivi s vidnim poljem horizontalnog raspona od $90 degree$. Korištena kamera također ne prati duljinu ekspozicije, nego se pretpostavlja da su svi fotoreceptori senzora osvijetljeni istovremeno konstantnom jačinom svjetlost.
 
 = Materijali
 
 Izgled materijala geometrije u sceni ovisi o brojnim svojstvima samog materijala kao i mediju u kojem se on i kamera nalaze.
 
-Potpuno ispravna simulacija interakcije zraka svjetlosti s materijalima je nepraktična jer su mjerenja nekih svojstva materijala iznimno spor proces koji zahtjeva skupu opremu. Također, određena svojstva nije moguče dobro izmjeriti za neke materijale pa je potrebno koristiti aproksimacije. Simulacije koje se oslanjaju na veliku količinu svojstva materijala također zahtjevaju vrlo snažnu opremu i/ili puno vremena.
+Potpuno ispravna simulacija interakcije zraka svjetlosti s materijalima je nepraktična jer su mjerenja nekih svojstva materijala iznimno spor proces koji zahtjeva skupu opremu. Također, određena svojstva nije moguće dobro izmjeriti za neke materijale pa je potrebno koristiti aproksimacije. Simulacije koje se oslanjaju na veliku količinu svojstva materijala također zahtijevaju vrlo snažnu opremu i/ili puno vremena.
 
 Iz tih razloga se za RT u realnom vremenu nastoji pojednostaviti ključna svojstva koja imaju utjecaj na konačan izgled materijala na osnovne koje značajno pridonose konačnom izgledu. Također, materijale se grupira ovisno o njihovom generalnom izgledu (mat, plastični, ...) kako bi se daljnje pojednostavio izračun.
 
 Osnovna svojstva materijala mogu biti:
 - osnovna/albedo boja,
 - metaličnost površine,
-- gruboča/hrapavost površine,
+- gruboća/hrapavost površine,
 - indeks refrakcije za spekularnu refleksiju i refrakciju,
 - prozirnost,
 - svojstva hoda prilikom raštrkavanja svjetlosti u materijalu,
@@ -278,23 +278,23 @@ Materijali često nemaju uniformna svojstva po svojoj cijeloj površini (npr. bo
 
 = Izvori i interakcije svjetlosti
 
-Svijetlo je emitirano (engl. _emission_) iz izvora. U grafici to aproksimiramo idealnim reprezentacijama svijetlosti, no u stvarnosti svijetlo emitiraju različiti materijali pod utjecajem nekih kemijskih ili fizičkih procesa.
+Svijetlo je emitirano (engl. _emission_) iz izvora. U grafici to aproksimiramo idealnim reprezentacijama svjetlosti, no u stvarnosti svijetlo emitiraju različiti materijali pod utjecajem nekih kemijskih ili fizičkih procesa.
 
 U svrhu pojednostavljivanja simulacije, koriste se 3 osnovna izvora svjetlosti:
 - točkasti izvor (engl. _point light_),
 - usmjereni izvor (engl. _directional light_), i
-- ambijentno osvjeljenje (engl. _ambient light_).
+- ambijentno osvjetljenje (engl. _ambient light_).
 
 U nekim slučajevima se može modelirati i reflektor, no on je specijalizirana verzija točkastog izvora koji ima ograničen smjer emisije na neki zadani kut, te ponekad prigušenje prema rubovima.
 
-Kod unazadnih RT algoritama se dio geometrije smatra neosvjetljenim ako putanja uzoraka ne završava u izvoru svjetlosti. Konačno osvjetljenje za neosvjetljene dijelove scene je ambijentalno (ako se koristi).
+Kod unazadnih RT algoritama se dio geometrije smatra neosvijetljenim ako putanja uzoraka ne završava u izvoru svjetlosti. Konačno osvjetljenje za neosvijetljene dijelove scene je ambijentalno (ako se koristi).
 
-U stvarnosti ambijentalno osvjetljenje ne postoji nego je ono proizvod indirektne svijetlosti obližnjih izvora ili sunca. No postizanje ambijentalnog osvjeljenja na taj način nije praktično jer bi zahtjevalo glomazan broj rekurzija algoritma što bi učinilo RT nepraktično sporim.
+U stvarnosti ambijentalno osvjetljenje ne postoji nego je ono proizvod indirektne svjetlosti obližnjih izvora ili sunca. No postizanje ambijentalnog osvjetljenja na taj način nije praktično jer bi zahtijevalo glomazan broj rekurzija algoritma što bi učinilo RT nepraktično sporim.
 
-Usmjereni izvori se skoro nikada ne pojavljuju u prirodi, no u računalnoj primjeni se koriste za izvore svjetlosti koji su dovoljno udaljeni od sjenčane geometrije scene da su emitirane zrake svjetlosti gotovo paralelne. Zbog ograničenja hardvera, tj. pohrane decimalnih bojeva i pogrešaka pri računu s iznimno malim ili velikim vrijednostima istih, modeliranje vrlo dalekih izvora svjetlosti nebi davalo točne rezultate.#linebreak()
-Usmjereni snop svjetlosti se može postići jedino pomoću polarizacijskih filtera ili stimuliranom emisijom (npr. laseri).
+Usmjereni izvori se skoro nikada ne pojavljuju u prirodi, no u računalnoj primjeni se koriste za izvore svjetlosti koji su dovoljno udaljeni od sjenčane geometrije scene da su emitirane zrake svjetlosti gotovo paralelne. Zbog ograničenja hardvera, tj. pohrane decimalnih bojeva i pogrešaka pri računu s iznimno malim ili velikim vrijednostima istih, modeliranje vrlo dalekih izvora svjetlosti ne bi davalo točne rezultate.#linebreak()
+Usmjereni snop svjetlosti se može postići jedino uz pomoć polarizacijskih filtera ili stimuliranom emisijom (npr. laseri).
 
-Točkasti izvor svjetlosti je najbliži stvarnim (spontanim) izvorima, iako stvarni izvori ne emitiraju svjetlost istog intenziteta u svim smjerovima sa iste pozicije.
+Točkasti izvor svjetlosti je najbliži stvarnim (spontanim) izvorima, iako stvarni izvori ne emitiraju svjetlost istog intenziteta u svim smjerovima s iste pozicije.
 
 U praktičnom dijelu je modeliran usmjereni izvor koji je opisan jednostavno vektorom smjera.
 
@@ -325,13 +325,13 @@ gdje je:
   - $L_i (p,omega_i)$ je sjaj koji dolazi u točku $p$ od drugih izvora svjetlosti (engl. _incoming radiance_), te odbijanjem od reflektivnih površina, te konačno
   - $|cos(theta_i)|$ je geometrijsko prigušenje (engl. _geometric attenuation_) koje osigurava da je svjetlost koja se reflektira u smjeru $omega_0$ najizraženija za savršeni kut refleksije a smanjuje se za pliće kuteve.
 
-Jer je uzorkovanje svih mogučih zraka koje pridonose osvjetljenju nemoguče (jer ih je beskonačno mnogo), koriste se Las Vegas ili Monte Carlo aproksimacije za određivanje podintegralnog izraza. Ove aproksimacije pojednostavljuju problem određivanja stvarne vrijednosti integrala na određivanje nasumično odabranih uzoraka. @Pharr2016-ex[dio 13.]
+Jer je uzorkovanje svih mogućih zraka koje pridonose osvjetljenju nemoguće (jer ih je beskonačno mnogo), koriste se Las Vegas ili Monte Carlo aproksimacije za određivanje podintegralnog izraza. Ove aproksimacije pojednostavljuju problem određivanja stvarne vrijednosti integrala na određivanje nasumično odabranih uzoraka. @Pharr2016-ex[dio 13.]
 
-U kontekstu određivanja dolazeće svjetlosti se koristi tehnika koja se zove "ruski rulet". Kod ruskog ruleta, uzorkuje se nekoliko zraka svjetlosti umjesto svih zraka (za cijelu jediničnu 2-sferu) te pridonos "pobjedničkih" zraka dijeli s $1-P$, gdje je $P$ vjerojatnost da će promatrana zraka biti odklonjena iz izračuna. @Pharr2016-ex[dio 13., str. 787]
+U kontekstu određivanja dolazeće svjetlosti se koristi tehnika koja se zove "ruski rulet". Kod ruskog ruleta, uzorkuje se nekoliko zraka svjetlosti umjesto svih zraka (za cijelu jediničnu 2-sferu) te pridonos "pobjedničkih" zraka dijeli s $1-P$, gdje je $P$ vjerojatnost da će promatrana zraka biti otklonjena iz izračuna. @Pharr2016-ex[dio 13., str. 787]
 
-Dobro je za "nasumično odabrane" zrake za daljni hod odabrati zrake s manjim geometrijskim prigušenjem (sličnog smjera kao zraka savršene refleksije), jer će one generalno dati bolju aproksimaciju dolazeće svjetlosti.
+Dobro je za "nasumično odabrane" zrake za daljnji hod odabrati zrake s manjim geometrijskim prigušenjem (sličnog smjera kao zraka savršene refleksije), jer će one generalno dati bolju aproksimaciju dolazeće svjetlosti.
 
-@refl-code prikazuje izračun korišten za određivanje vrijenosti uzoraka na 2-sferi koja je savršeno zrcalo.
+@refl-code prikazuje izračun korišten za određivanje vrijednosti uzoraka na 2-sferi koja je savršeno zrcalo.
 
 #figure(caption: "Izračun refleksije")[
 ```rust
@@ -348,11 +348,11 @@ if let Some(distance) = sphere.intersect(&ray) {
   img.put_pixel(target.x as u32, target.y as u32, Rgb([0, 0, 0]));
 }
 ```
-]<refl-code>
+] <refl-code>
 
 Konačan prikaz praktičnog rada je prikazan u @final[slici].
 
-#figure(caption: "Konačan prikaz", image("figure/output_1.png", width: 30em))<final>
+#figure(caption: "Konačan prikaz", image("figure/output_1.png", width: 30em)) <final>
 
 #pagebreak()
 = Otklanjanje buke/šuma
@@ -367,15 +367,15 @@ U zadnje vrijeme počinju se primjenjivati tehnike iz strojnog učenja u svrhu o
 #pagebreak()
 = Usporedba s klasičnom rasterizacijom
 
-Zbog duge primjene, za klasične metode rasterizacije (nadalje rasterizacija) je razvijen velik broj tehnika za postizanje različitih efekata koji su primjetni u stvarnosti. Mnogi od tih efekata su nešto jednostavniji za postignuti od strane RT algoritama no zbog toga su zahtjevniji za provođenje. 
+Zbog duge primjene, za klasične metode rasterizacije (nadalje rasterizacija) je razvijen velik broj tehnika za postizanje različitih efekata koji su primjetni u stvarnosti. Mnogi od tih efekata su nešto jednostavniji za postignuti uporabom RT algoritama no zbog toga su zahtjevniji za provođenje. 
 
 == Odrazi
 
-Odrazi (engl. _reflections_) se u klasičnim metodama rasterizacije izvode tako da se scena prije rasterizacije glavnog prikaza prvobitno prikaže sa pozicije koja je zrcaljena pozicija kamere s obzirom na reflektivnu površinu. Ovisno o sadržaju scene, ova tehnika može biti iznimno zahtjevna, pogotovo kada je u istom kadru vidljivo više reflektivnih površina. U nekim slučajevima je moguće provesti prikaz pomoću trikova poput rekreacije zrcaljenog sadržaja scene unutar/iza ogledala što značajno umanjuje ili potpuno otklanja zahtjevnost dodatnog prikaza jer je zaseban prikaz (engl. _render pass_) potreban samo ako ogledalo treba sadržavati dinamične dijelove scene koji nisu unaprijed poznati.
+Odrazi (engl. _reflections_) se u klasičnim metodama rasterizacije izvode tako da se scena prije rasterizacije glavnog prikaza prvobitno prikaže s pozicije koja je zrcaljena pozicija kamere s obzirom na reflektivnu površinu. Ovisno o sadržaju scene, ova tehnika može biti iznimno zahtjevna, pogotovo kada je u istom kadru vidljivo više reflektivnih površina. U nekim slučajevima je moguće provesti prikaz pomoću trikova poput rekreacije zrcaljenog sadržaja scene unutar/iza ogledala što značajno umanjuje ili potpuno otklanja zahtjevnost dodatnog prikaza jer je zaseban prikaz (engl. _render pass_) potreban samo ako ogledalo treba sadržavati dinamične dijelove scene koji nisu unaprijed poznati.
 
 == Ambijentalna okluzija
 
-Ambijentalna okluzija (engl. _ambient occlusion_, AO) se pojavljuje kada geometrija sadrži kuteve manje od $180 degree$, a postaje zamjetljivija kod oštrijih kutova. @ssao prikazuje istu scenu sa i bez AO - vidi se zamjetna razlika u kvaliteti prikaza zbog dobivenoh osjećaja dubine.
+Ambijentalna okluzija (engl. _ambient occlusion_, AO) se pojavljuje kada geometrija sadrži kuteve manje od $180 degree$, a postaje zamjetljivija kod oštrijih kutova. @ssao prikazuje istu scenu s (a) i bez (b) AO - vidi se zamjetna razlika u kvaliteti prikaza zbog dobivenih osjećaja dubine.
 
 Kod rasterizacije je ambijentalna okluzija u prostoru zaslona (engl. _screen-space ambient occlusion_, SSAO) tehnika koja daje iznimno uvjerljive rezultate a usporedno je jeftinija od njoj prethodećih tehnika koje su koristile stvarnu geometriju scene. @learnopengl[SSAO]
 
