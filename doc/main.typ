@@ -1,4 +1,4 @@
-#import "template.typ": config, figure-list, appendix, formula
+#import "template/template.typ": config, figure-list, appendix
 
 #import "@preview/cetz:0.3.1": canvas, draw
 #import "@preview/cetz-plot:0.1.0": plot, chart
@@ -6,15 +6,14 @@
 #show "TODO": box(fill: red, outset: 2pt, text(fill: white, weight: "black", "NEDOSTAJE SADRŽAJ"))
 
 #show: config(
-  [Seminarski rad iz kolegija#linebreak() MULTIMEDIJSKE TEHNOLOGIJE],
-  [Ray Tracing],
-  none,
-  logo: none,
+  "seminar",
+  class: "Multimedijske Tehnologije",
+  "Ray Tracing",
+  "Tin Švagelj",
   attributions: [
-    *Autor:* Tin Švagelj
-
     *Voditelj kolegija:* doc. dr. sc., Miran Pobar
   ],
+  bibliography-file: "references.bib"
 )
 
 = Uvod
@@ -303,7 +302,7 @@ U praktičnom dijelu je modeliran usmjereni izvor koji je opisan jednostavno vek
 Zbog toga što na svaku uzorkovanu točku može djelovati svjetlost iz različitih smjerova, za svaku uzorkovanu točku je (u idealnoj implementaciji) potrebno rekurzivno uzorkovati dolazeću svjetlost ($L_i$) iz svih točaka koje čine površinu jedinične sfere $cal(S)_2$ centrirane oko točke presjeka prethode zrake s geometrijom. Kada je materijal neproziran ili je od interesa samo refleksija, dovoljno je uzorkovati polusferu ($cal(H)_2$) čija ravna stranica je tangenta na površinu, a zakrivljena je udaljenija od ravne.
 
 Formula za izračun konačnog osvjetljenja koje je vidljivo u nekoj točki je:
-#formula(caption: [
+#figure(caption: [
   Formula za izračun reflektirane svjetlosti točke @Pharr2016-ex[str. 350]
 ], $
 L_0(p, omega_0) =
@@ -404,10 +403,3 @@ U slučaju RT algoritama se radi o jednostavnijoj značajki za implementaciju - 
 Iako ray tracing metode pružaju mnoga unaprijeđenja u realizmu prikazanih scena, nisu "čaroban metak"#footnote[rješenje koje ne treba alternative jer zadovoljava sve moguće slučajeve primjene]. Njihova implementacija zahtjeva iznimno puno truda kako bi se pokrile sve namjene, te postoji puno mjesta gdje je potrebno .
 
 #pagebreak()
-#bibliography(
-  title: "Literatura",
-  "references.bib",
-  style: "ieee"
-)
-
-#figure-list()

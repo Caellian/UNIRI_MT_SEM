@@ -26,6 +26,7 @@
 #let custom-outline(
   spacing: 6pt,
   format: default-outline-format,
+  filter: it => true,
   ..targets
 ) = context {
   let entries = ()
@@ -66,6 +67,9 @@
     }
     if repr(body.func()) == "linebreak" {
       return " "
+    }
+    if repr(body.func()) == "context" {
+      return body
     }
     if repr(body.func()) == "sequence" {
       let children = body.at("children", default: none)
@@ -129,5 +133,5 @@
     )
   }
   
-  stack(dir: ttb, spacing: spacing, ..entries.map(it => format(..get-entry-data(it))))
+  stack(dir: ttb, spacing: spacing, ..entries.filter(filter).map(it => format(..get-entry-data(it))))
 }
